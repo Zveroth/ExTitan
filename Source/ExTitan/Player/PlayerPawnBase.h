@@ -6,6 +6,13 @@
 #include "GameFramework/Pawn.h"
 #include "PlayerPawnBase.generated.h"
 
+
+
+struct FInputActionInstance;
+
+class UCameraComponent;
+class UInputAction;
+
 UCLASS()
 class EXTITAN_API APlayerPawnBase : public APawn
 {
@@ -15,15 +22,18 @@ public:
 	// Sets default values for this pawn's properties
 	APlayerPawnBase();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+protected:
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UCameraComponent* Camera;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Setup|Input")
+	TSoftObjectPtr<UInputAction> InteractionInputAction;
+
+private:
+
+	void InteractCallback(const FInputActionInstance& Action);
 };

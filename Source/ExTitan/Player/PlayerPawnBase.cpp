@@ -1,28 +1,24 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Player/PlayerPawnBase.h"
+#include "Camera/CameraComponent.h"
+
+#include "EnhancedInputComponent.h"
+#include "InputAction.h"
+
+
 
 // Sets default values
 APlayerPawnBase::APlayerPawnBase()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
-}
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 
-// Called when the game starts or when spawned
-void APlayerPawnBase::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
-// Called every frame
-void APlayerPawnBase::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
+	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	Camera->SetupAttachment(RootComponent);
+	Camera->SetProjectionMode(ECameraProjectionMode::Perspective);
+	Camera->SetFieldOfView(75.0f);
 }
 
 // Called to bind functionality to input
@@ -30,5 +26,17 @@ void APlayerPawnBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+
+	if (!ensure(IsValid(EnhancedInput)))
+	{
+		return;
+	}
+	
+	EnhancedInput->BindAction(InteractionInputAction.LoadSynchronous(), ETriggerEvent::Triggered, this, &APlayerPawnBase::InteractCallback);
 }
 
+void APlayerPawnBase::InteractCallback(const FInputActionInstance& Action)
+{
+	UE_LOG(LogTemp, Warning, TEXT("A"));
+}
