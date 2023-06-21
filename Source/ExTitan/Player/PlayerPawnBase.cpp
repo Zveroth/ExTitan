@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "Player/PlayerPawnBase.h"
 #include "Camera/CameraComponent.h"
+#include "Interaction/Interactable.h"
+#include "Interaction/InteractionsManagerComponent.h"
 
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
@@ -38,5 +40,26 @@ void APlayerPawnBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 void APlayerPawnBase::InteractCallback(const FInputActionInstance& Action)
 {
-	UE_LOG(LogTemp, Warning, TEXT("A"));
+	APlayerController* PlayerController = GetController<APlayerController>();
+	check(IsValid(PlayerController));
+
+	FHitResult HitResult;
+
+	PlayerController->GetHitResultUnderCursor(ECollisionChannel::ECC_WorldStatic, false, HitResult);
+
+	AActor* const HitActor = HitResult.GetActor();
+	if (!IsValid(HitActor))
+	{
+		return;
+	}
+
+	IInteractable* const Interactable = Cast<IInteractable>(HitActor);
+	if (!Interactable)
+	{
+		return;
+	}
+
+	UInteractionsManagerComponent* InteractionsManager = Interactable->GetInteractionsManager();
+
+	InteractionsManager->OnClicked();
 }

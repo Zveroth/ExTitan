@@ -7,22 +7,53 @@
 #include "InteractionBaseComponent.generated.h"
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+
+class UInteractionsManagerComponent;
+class AAgentBase;
+
+UCLASS()
 class EXTITAN_API UInteractionBaseComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
+
 	UInteractionBaseComponent();
 
+	const FText& GetInteractionText() const { return InteractionText; }
+
+	void BeginInteractionProcess(AAgentBase* InteractingAgent);
+	void BreakInteractionProcess();
+
+	bool IsOccupied() const;
+
+	bool CanBeUsed() const { return MaxUses != 0; }
+
 protected:
-	// Called when the game starts
+
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void EndInteractionProcess();
 
-		
+	virtual void BeginInteraction_Implementation() {}
+	virtual void BreakInteraction_Implementation(AAgentBase* InAgent) {}
+	virtual void EndInteraction_Implementation(AAgentBase* InAgent) {}
+
+private:
+
+	UInteractionsManagerComponent* GetOwnerInteractionsManager() const;
+
+	void RegisterInteraction();
+	void UnregisterInteraction();
+
+protected:
+
+	UPROPERTY(EditDefaultsOnly, Category = "Interaction")
+	FText InteractionText;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Interaction")
+	int32 MaxUses = -1;
+
+	UPROPERTY()
+	AAgentBase* OccupyingAgent;
 };

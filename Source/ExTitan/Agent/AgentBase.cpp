@@ -1,34 +1,77 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Agent/AgentBase.h"
+#include "AIController.h"
+#include "BehaviorTree/BehaviorTree.h"
+#include "Agent/AgentHandlingSubsystem.h"
+
+
 
 // Sets default values
 AAgentBase::AAgentBase()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
+	CapsuleMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CapsuleMesh"));
+	CapsuleMesh->SetupAttachment(RootComponent);
+
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
-// Called when the game starts or when spawned
+void AAgentBase::OverrideBehavior(UBehaviorTree* Behavior)
+{
+	AAIController* const AIController = GetController<AAIController>();
+	if (IsValid(AIController))
+	{
+		AIController->RunBehaviorTree(Behavior);
+	}
+}
+
+void AAgentBase::ClearBehaviorOverride()
+{
+	SetupBehaviorTree();
+}
+
 void AAgentBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	SetupBehaviorTree();
+
+	UAgentHandlingSubsystem* const AgentSubsystem = UWorld::GetSubsystem<UAgentHandlingSubsystem>(GetWorld());
+	AgentSubsystem->RegisterAgent(this);
+
+	CapsuleMesh->CreateDynamicMaterialInstance(0);
 }
 
-// Called every frame
-void AAgentBase::Tick(float DeltaTime)
+void AAgentBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	Super::Tick(DeltaTime);
+	Super::EndPlay(EndPlayReason);
 
+	UAgentHandlingSubsystem* const AgentSubsystem = UWorld::GetSubsystem<UAgentHandlingSubsystem>(GetWorld());
+	AgentSubsystem->UnregisterAgent(this);
 }
 
-// Called to bind functionality to input
-void AAgentBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void AAgentBase::SetIsBusy(bool bInBusy)
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	if (m_bBusy != bInBusy)
+	{
+		m_bBusy = bInBusy;
 
+		OnAgentBusyStateChanged.ExecuteIfBound(this);
+	}
 }
 
+void AAgentBase::SetupBehaviorTree()
+{
+	if (DefaultBehaviorTree.IsNull())
+	{
+		return;
+	}
+
+	AAIController* const AIController = GetController<AAIController>();
+	if (IsValid(AIController))
+	{
+		AIController->RunBehaviorTree(DefaultBehaviorTree.LoadSynchronous());
+	}
+}

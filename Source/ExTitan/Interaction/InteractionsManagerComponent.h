@@ -7,6 +7,10 @@
 #include "InteractionsManagerComponent.generated.h"
 
 
+class UInteractionBaseComponent;
+
+struct FListWidgetEntryData;
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class EXTITAN_API UInteractionsManagerComponent : public UActorComponent
 {
@@ -16,13 +20,17 @@ public:
 	// Sets default values for this component's properties
 	UInteractionsManagerComponent();
 
-protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
+	void RegisterInteraction(UInteractionBaseComponent* Interaction);
+	void UnregisterInteraction(UInteractionBaseComponent* Interaction);
 
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void OnClicked();
 
-		
+private:
+
+	TArray<FListWidgetEntryData> GetInteractionUIOptions() const;
+
+private:
+
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	TSet<UInteractionBaseComponent*> m_Interactions;
 };
